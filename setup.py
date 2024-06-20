@@ -215,6 +215,6 @@ setuptools.setup(
     ],
     include_package_data=True,
     packages=setuptools.find_packages(),
-    python_requires=">=3.9, <3.11",
+    python_requires=">=3.10",
     install_requires=install_requires
 )
