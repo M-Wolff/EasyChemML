@@ -77,7 +77,9 @@ class Environment:
         from importlib import reload
         reload(logging)
 
-        logging.basicConfig(filename=os.path.join(self.WORKING_path, 'MainNode.log'), level=logging.INFO)
+        logging.basicConfig(filename=os.path.join(self.WORKING_path, 'MainNode.log'), level=logging.INFO,
+                            format="%(asctime)s - %(levelname)s - %(message)s",
+                            datefmt="%Y-%m-%d %H:%M:%S")
         logging.info(' ###################################################################################')
         logging.info('    ______           _______     _______ _    _ ______ __  __        __  __ _       ')
         logging.info('   |  ____|   /\    / ____\ \   / / ____| |  | |  ____|  \/  |      |  \/  | |      ')
