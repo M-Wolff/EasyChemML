@@ -121,7 +121,7 @@ class FingerprintEncoder:
                 col_arr = FP_GENERATOR.generateArrOfFingerprints(input_arr[current_index][columns], fp_names,
                                                                  fp_settings)
             except Exception as e:
-                print(f'Data (row: {current_index}) can not translate in a fingerprint')
+                print(f'Data (row: {current_index}) can not translate in a fingerprint ({input_arr[current_index][columns]})')
                 if ignore_errors:
                     col_arr = copy.copy(empty_arr)
                 else:

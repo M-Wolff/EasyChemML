@@ -95,10 +95,8 @@ class BatchPartition(object):
         else:
             root_grp = h5py.File(h5_path, 'w', driver=mode.value, libver='latest', rdcc_nslots=rdcc_nslots,
                                  rdcc_nbytes=rdcc_nbytes)
-
         tmp_grp_o = root_grp.require_group(tmp_grp)
         data_grp_o = root_grp.require_group(data_grp)
-
         self._struc = BatchStructure(data_grp_o, tmp_grp_o, self, root_grp, read_only)
         self._default_chunk_size = default_chunk_size
         self._Databuffer = {}
