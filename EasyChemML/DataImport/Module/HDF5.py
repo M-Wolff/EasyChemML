@@ -1,27 +1,38 @@
-from typing import List, Union, Tuple, Optional
+from typing import List, Optional, Tuple, Union
+
 import numpy as np
 
-from EasyChemML.DataImport.Module.Abstract_DataImporter import Abstract_DataImporter
-from EasyChemML.Utilities.DataUtilities.BatchDatatypHolder import BatchDatatypHolder
-from EasyChemML.Utilities.DataUtilities.BatchPartition import BatchPartition, BatchPartitionMode
+from EasyChemML.DataImport.Module.Abstract_DataImporter import \
+    Abstract_DataImporter
+from EasyChemML.Utilities.DataUtilities.BatchDatatypHolder import \
+    BatchDatatypHolder
+from EasyChemML.Utilities.DataUtilities.BatchPartition import (
+    BatchPartition, BatchPartitionMode)
 from EasyChemML.Utilities.DataUtilities.BatchTable import BatchTable
 
 
 class HDF5(Abstract_DataImporter):
-    _batchPartition:BatchPartition
-    _batchTable:BatchTable
+    _batchPartition: BatchPartition
+    _batchTable: BatchTable
     # params
     _path: str
     _tableName: str
     _selection: Optional[np.ndarray]
     _columns: List[str]
 
-    _nJobs:int
-    _batchSize:int
+    _nJobs: int
+    _batchSize: int
     _shape: Tuple[int]
 
-    def __init__(self, path: str, tableName: str, selection: Union[slice, List[int]] = None, columns: List[str] = None,
-                 n_jobs: int = 1, batch_size: int = 100000):
+    def __init__(
+        self,
+        path: str,
+        tableName: str,
+        selection: Union[slice, List[int]] = None,
+        columns: List[str] = None,
+        n_jobs: int = 1,
+        batch_size: int = 100000,
+    ):
         super().__init__()
         self._path = path
         self._batchSize = batch_size
@@ -31,21 +42,30 @@ class HDF5(Abstract_DataImporter):
         if selection is not None:
             if isinstance(selection, slice):
                 if selection.step is None:
-                    self._selection = np.asarray(list(range(selection.start, selection.stop)))
+                    self._selection = np.asarray(
+                        list(range(selection.start, selection.stop))
+                    )
                 else:
-                    self._selection = np.asarray(list(range(selection.start, selection.stop, selection.step)))
+                    self._selection = np.asarray(
+                        list(range(selection.start, selection.stop, selection.step))
+                    )
             elif isinstance(selection, list):
                 self._selection = np.asarray(selection)
             elif isinstance(selection, np.ndarray):
                 self._selection = selection
             else:
-                raise Exception('selection should be a slice or list')
+                raise Exception("selection should be a slice or list")
         else:
             self._selection = None
 
         self._tableName = tableName
 
-        self._batchPartition = BatchPartition(path, load_existing=True, read_only=True, mode=BatchPartitionMode.direct_UnBufferedIO)
+        self._batchPartition = BatchPartition(
+            path,
+            load_existing=True,
+            read_only=True,
+            mode=BatchPartitionMode.direct_UnBufferedIO,
+        )
         self._batchTable = self._batchPartition[tableName]
 
         if self._columns is None:
@@ -56,24 +76,28 @@ class HDF5(Abstract_DataImporter):
         if self._selection is not None:
             self._shape = (len(self._selection),)
 
-    def set_columns(self, columns:List[str]):
+    def set_columns(self, columns: List[str]):
         self._columns = columns
 
     def get_columns(self) -> List[str]:
         return self._columns
 
-    def set_selection(self,  selection: Union[slice, List[int]]):
+    def set_selection(self, selection: Union[slice, List[int]]):
         if isinstance(selection, slice):
             if selection.step is None:
-                self._selection = np.asarray(list(range(selection.start, selection.stop)))
+                self._selection = np.asarray(
+                    list(range(selection.start, selection.stop))
+                )
             else:
-                self._selection = np.asarray(list(range(selection.start, selection.stop, selection.step)))
+                self._selection = np.asarray(
+                    list(range(selection.start, selection.stop, selection.step))
+                )
         elif isinstance(selection, list):
             self._selection = np.asarray(selection)
         elif isinstance(selection, np.ndarray):
             self._selection = selection
         else:
-            raise Exception('selection should be a slice or list')
+            raise Exception("selection should be a slice or list")
 
         self._shape = (len(self._selection),)
 
@@ -83,9 +107,9 @@ class HDF5(Abstract_DataImporter):
     def get_shape(self) -> Tuple[int]:
         if self._selection is not None:
             if isinstance(self._selection, np.ndarray):
-                return len(self._selection),
+                return (len(self._selection),)
             else:
-                raise Exception('selectiontyp unkown')
+                raise Exception("selectiontyp unkown")
         else:
             return self._batchTable.shape()
 
@@ -109,7 +133,7 @@ class HDF5(Abstract_DataImporter):
                     data = self._batchTable[indicies]
                     return data[self._columns]
         else:
-            raise Exception('selection should be a slice or list')
+            raise Exception("selection should be a slice or list")
 
     def get_Split(self):
         return None
@@ -126,13 +150,12 @@ class HDF5(Abstract_DataImporter):
     def get_nJobs(self) -> int:
         return self._nJobs
 
-
     @staticmethod
-    def getTableNames(path:str) -> List[str]:
+    def getTableNames(path: str) -> List[str]:
         bp = BatchPartition(path, load_existing=True, read_only=True)
         return list(bp.keys())
 
     @staticmethod
-    def getShape(path:str, tableName:str) -> Tuple[int]:
+    def getShape(path: str, tableName: str) -> Tuple[int]:
         bp = BatchPartition(path, load_existing=True, read_only=True)
         return bp[tableName].shape()
