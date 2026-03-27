@@ -82,6 +82,8 @@ class FingerprintEncoder:
         iterator: BatchAccess = iter(InputBuffer)
         batch: np.ndarray
         dataTypHolder: BatchDatatypHolder = InputBuffer.getDatatypes()
+        parallel_executer = ParallelHelper(n_jobs)
+        chunksize = 2048 if n_jobs != 1 else 0
 
         if len(createNewColumns) > 0:
             if len(createNewColumns) == len(columns):
@@ -98,8 +100,7 @@ class FingerprintEncoder:
         for batch in iterator:
             out = dataTypHolder.createAEmptyNumpyArray(len(batch))
             shared_batch = Shared_PythonList(batch, InputBuffer.getDatatypes())
-            parallel_executer = ParallelHelper(n_jobs)
-            IQ_settings = IndexQueue_settings(start_index=0, end_index=len(batch), chunksize=128)
+            IQ_settings = IndexQueue_settings(start_index=0, end_index=len(batch), chunksize=chunksize)
             out = parallel_executer.execute_map_orderd_return(self._parallel_convert, IQ_settings, out.dtype,
                                                               input_arr=shared_batch, columns=columns, createNewColumns=createNewColumns,
                                                               fp_names=fp_names,
@@ -109,6 +110,8 @@ class FingerprintEncoder:
 
             iterator <<= out
             shared_batch.destroy()
+
+        del parallel_executer
 
     def _parallel_convert(self, input_arr: Shared_PythonList, columns: List[str], out_dtypes, current_chunk: List[int],
                           fp_names, fp_settings, ignore_errors: bool, FP_GENERATOR: FingerprintGenerator, createNewColumns:List[str]):
