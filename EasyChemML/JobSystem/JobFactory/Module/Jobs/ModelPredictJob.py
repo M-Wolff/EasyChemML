@@ -14,7 +14,7 @@ class ModelPredictJob:
     X_cols = List[str]
     X_indices: List[int]
 
-    predicted_vals: Union[BatchTable, List, np.numarray]
+    predicted_vals: Union[BatchTable, List, np.ndarray]
     writeInBatchSystem: Tuple[BatchPartition, str] = False
     skipSavePrediction: bool = False
     processInBatches: bool = False
@@ -36,5 +36,5 @@ class ModelPredictJob:
         else:
             self.X_indices = list(range(len(X)))
 
-    def set_predicted_vals(self, predicted_vals: Union[BatchTable, List, np.numarray]):
+    def set_predicted_vals(self, predicted_vals: Union[BatchTable, List, np.ndarray]):
         self.predicted_vals = predicted_vals
