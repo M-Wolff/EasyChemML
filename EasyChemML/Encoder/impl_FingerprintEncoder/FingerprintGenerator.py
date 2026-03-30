@@ -7,6 +7,7 @@ from enum import Enum
 from rdkit import Chem, DataStructs
 from rdkit.Avalon import pyAvalonTools
 from rdkit.Chem import MACCSkeys, AllChem
+from rdkit.Chem import rdFingerprintGenerator
 from rdkit.Chem import rdMolDescriptors
 from rdkit.DataStructs.cDataStructs import ExplicitBitVect
 
@@ -144,13 +145,18 @@ class FingerprintGenerator:
     def __generateFingerprints_Morgan_Circular(self, data, length, args, minimum_dtype: BatchDatatypClass):
         if data == 'NA':
             return self.__getEmptyBitVector(length, minimum_dtype)
-        return self.__generate_Array(AllChem.GetMorganFingerprintAsBitVect(data, nBits=length, **args), minimum_dtype)
+        generator = rdFingerprintGenerator.GetMorganGenerator(fpSize=length, **args)
+        return self.__generate_Array(generator.GetFingerprint(data), minimum_dtype)
 
     def __generateFingerprints_Morgan_Circular_Count(self, data, length, args, minimum_dtype: BatchDatatypClass):
         if data == 'NA':
             return self.__getEmptyBitVector(length, minimum_dtype)
-        return self.__generate_Array(rdMolDescriptors.GetHashedMorganFingerprint(data, nBits=length, **args),
-                                     minimum_dtype)
+        generator = rdFingerprintGenerator.GetMorganGenerator(
+            fpSize=length, countSimulation=True, **args
+        )
+        return self.__generate_Array(
+            generator.GetCountFingerprint(data), minimum_dtype
+        )
 
     def __generateFingerprints_Avalon(self, data, length, args, minimum_dtype: BatchDatatypClass):
         if data == 'NA':
