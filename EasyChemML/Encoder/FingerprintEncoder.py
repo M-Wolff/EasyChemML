@@ -1,4 +1,5 @@
 import copy
+import time
 
 from .impl_FingerprintEncoder.FingerprintGenerator import FingerprintGenerator, FingerprintGenerator_Mode
 from EasyChemML.Utilities.DataUtilities.BatchTable import BatchTable, BatchAccess
@@ -94,21 +95,35 @@ class FingerprintEncoder:
             for column in columns:
                 dataTypHolder[column] = BatchDatatyp(minimum_dtype, (size,))
 
-        for batch in iterator:
+        total_batches = len(iterator)
+        for batch_index, batch in enumerate(iterator, start=1):
+            batch_start_time = time.perf_counter()
             out = dataTypHolder.createAEmptyNumpyArray(len(batch))
+            shared_batch_start_time = time.perf_counter()
             shared_batch = Shared_PythonList(batch, InputBuffer.getDatatypes())
+            shared_batch_duration = time.perf_counter() - shared_batch_start_time
             parallel_executer = ParallelHelper(n_jobs)
             chunksize = 128 if n_jobs != 1 else 0
             IQ_settings = IndexQueue_settings(start_index=0, end_index=len(batch), chunksize=chunksize)
+            parallel_start_time = time.perf_counter()
             out = parallel_executer.execute_map_orderd_return(self._parallel_convert, IQ_settings, out.dtype,
                                                               input_arr=shared_batch, columns=columns, createNewColumns=createNewColumns,
                                                               fp_names=fp_names,
                                                               fp_settings=fp_settings,
                                                               ignore_errors=ignore_errors,
                                                               FP_GENERATOR=FG)
+            parallel_duration = time.perf_counter() - parallel_start_time
 
+            writeback_start_time = time.perf_counter()
             iterator <<= out
+            writeback_duration = time.perf_counter() - writeback_start_time
             shared_batch.destroy()
+            batch_duration = time.perf_counter() - batch_start_time
+            print(
+                f"FingerprintEncoder batch {batch_index}/{total_batches} | rows={len(batch)} | "
+                f"shared={shared_batch_duration:.2f}s | parallel={parallel_duration:.2f}s | "
+                f"write={writeback_duration:.2f}s | total={batch_duration:.2f}s"
+            )
 
     def _parallel_convert(self, input_arr: Shared_PythonList, columns: List[str], out_dtypes, current_chunk: List[int],
                           fp_names, fp_settings, ignore_errors: bool, FP_GENERATOR: FingerprintGenerator, createNewColumns:List[str]):
