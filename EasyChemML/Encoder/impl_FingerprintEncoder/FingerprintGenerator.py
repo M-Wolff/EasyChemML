@@ -119,37 +119,54 @@ class FingerprintGenerator:
         arr = np.zeros((length,), dtype=minimum_dtype.to_numpy())
         return arr
 
-    def __generateFingerprints_RDKit(self, data, length, args, minimum_dtype: BatchDatatypClass):
+    # Fingerprints can now be generated directly from normalized SMILES strings
+    # so we avoid shipping RDKit Mol Python objects through shared memory.
+    def __normalize_input_mol(self, data):
         if data == 'NA':
+            return None
+        if isinstance(data, bytes):
+            data = data.decode('utf-8')
+        if isinstance(data, str):
+            return Chem.MolFromSmiles(data)
+        return data
+
+    def __generateFingerprints_RDKit(self, data, length, args, minimum_dtype: BatchDatatypClass):
+        data = self.__normalize_input_mol(data)
+        if data is None:
             return self.__getEmptyBitVector(length, minimum_dtype)
         fp = Chem.RDKFingerprint(mol=data, fpSize=length, **args)
         return self.__generate_Array(fp, minimum_dtype)
 
     def __generateFingerprints_Atom_Pairs(self, data, length, args, minimum_dtype: BatchDatatypClass):
-        if data == 'NA':
+        data = self.__normalize_input_mol(data)
+        if data is None:
             return self.__getEmptyBitVector(length, minimum_dtype)
         return self.__generate_Array(rdMolDescriptors.GetHashedAtomPairFingerprintAsBitVect(data, nBits=length, **args),
                                      minimum_dtype)
 
     def __generateFingerprints_Topological_Torsions(self, data, length, args, minimum_dtype: BatchDatatypClass):
-        if data == 'NA':
+        data = self.__normalize_input_mol(data)
+        if data is None:
             return self.__getEmptyBitVector(length, minimum_dtype)
         return self.__generate_Array(rdMolDescriptors.GetHashedTopologicalTorsionFingerprintAsBitVect
                                      (data, nBits=length, **args), minimum_dtype)
 
     def __generateFingerprints_MACCS_keys(self, data, args, minimum_dtype: BatchDatatypClass):
-        if data == 'NA':
+        data = self.__normalize_input_mol(data)
+        if data is None:
             return self.__getEmptyBitVector(167, minimum_dtype)
         return self.__generate_Array(MACCSkeys.GenMACCSKeys(data, **args), minimum_dtype)
 
     def __generateFingerprints_Morgan_Circular(self, data, length, args, minimum_dtype: BatchDatatypClass):
-        if data == 'NA':
+        data = self.__normalize_input_mol(data)
+        if data is None:
             return self.__getEmptyBitVector(length, minimum_dtype)
         generator = rdFingerprintGenerator.GetMorganGenerator(fpSize=length, **args)
         return self.__generate_Array(generator.GetFingerprint(data), minimum_dtype)
 
     def __generateFingerprints_Morgan_Circular_Count(self, data, length, args, minimum_dtype: BatchDatatypClass):
-        if data == 'NA':
+        data = self.__normalize_input_mol(data)
+        if data is None:
             return self.__getEmptyBitVector(length, minimum_dtype)
         generator = rdFingerprintGenerator.GetMorganGenerator(
             fpSize=length, countSimulation=True, **args
@@ -159,11 +176,13 @@ class FingerprintGenerator:
         )
 
     def __generateFingerprints_Avalon(self, data, length, args, minimum_dtype: BatchDatatypClass):
-        if data == 'NA':
+        data = self.__normalize_input_mol(data)
+        if data is None:
             return self.__getEmptyBitVector(length, minimum_dtype)
         return self.__generate_Array(pyAvalonTools.GetAvalonFP(data, nBits=length, **args), minimum_dtype)
 
     def __generateFingerprints_LayerdFingerprint(self, data, length, args, minimum_dtype: BatchDatatypClass):
-        if data == 'NA':
+        data = self.__normalize_input_mol(data)
+        if data is None:
             return self.__getEmptyBitVector(length, minimum_dtype)
         return self.__generate_Array(Chem.LayeredFingerprint(data, fpSize=length, **args), minimum_dtype)
