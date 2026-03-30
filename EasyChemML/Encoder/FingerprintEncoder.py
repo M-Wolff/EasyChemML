@@ -83,7 +83,7 @@ class FingerprintEncoder:
         batch: np.ndarray
         dataTypHolder: BatchDatatypHolder = InputBuffer.getDatatypes()
         parallel_executer = ParallelHelper(n_jobs)
-        chunksize = 2048 if n_jobs != 1 else 0
+        chunksize = 512 if n_jobs != 1 else 0
 
         if len(createNewColumns) > 0:
             if len(createNewColumns) == len(columns):
