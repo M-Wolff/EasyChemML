@@ -144,15 +144,17 @@ class FingerprintGenerator:
         data = self.__normalize_input_mol(data)
         if data is None:
             return self.__getEmptyBitVector(length, minimum_dtype)
-        return self.__generate_Array(rdMolDescriptors.GetHashedAtomPairFingerprintAsBitVect(data, nBits=length, **args),
-                                     minimum_dtype)
+        generator = rdFingerprintGenerator.GetAtomPairGenerator(fpSize=length, **args)
+        return self.__generate_Array(generator.GetFingerprint(data), minimum_dtype)
 
     def __generateFingerprints_Topological_Torsions(self, data, length, args, minimum_dtype: BatchDatatypClass):
         data = self.__normalize_input_mol(data)
         if data is None:
             return self.__getEmptyBitVector(length, minimum_dtype)
-        return self.__generate_Array(rdMolDescriptors.GetHashedTopologicalTorsionFingerprintAsBitVect
-                                     (data, nBits=length, **args), minimum_dtype)
+        generator = rdFingerprintGenerator.GetTopologicalTorsionGenerator(
+            fpSize=length, **args
+        )
+        return self.__generate_Array(generator.GetFingerprint(data), minimum_dtype)
 
     def __generateFingerprints_MACCS_keys(self, data, args, minimum_dtype: BatchDatatypClass):
         data = self.__normalize_input_mol(data)
