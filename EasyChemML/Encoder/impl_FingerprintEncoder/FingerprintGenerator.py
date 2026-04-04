@@ -122,6 +122,9 @@ class FingerprintGenerator:
     # Fingerprints can now be generated directly from normalized SMILES strings
     # so we avoid shipping RDKit Mol Python objects through shared memory.
     def __normalize_input_mol(self, data):
+        # FingerprintEncoder passes single selected columns as 1-element tuples.
+        if isinstance(data, tuple) and len(data) == 1:
+            data = data[0]
         if data == 'NA':
             return None
         if isinstance(data, bytes):
